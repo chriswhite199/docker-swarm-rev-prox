@@ -1,0 +1,36 @@
+version: "3.8"
+
+# Adapted from https://docs.docker.com/engine/swarm/stack-deploy/
+
+services:
+  app:
+    image: 127.0.0.1:5000/stackdemo
+    build: .
+    deploy:
+      mode: replicated
+      replicas: 2
+    networks:
+      - reverse_proxy
+      - db
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      # Ideally this should be on an NFS mount or acquired from some shared
+      # location such as http, git repo etc
+      - ./default.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - reverse_proxy
+
+  redis:
+    image: redis:alpine
+    networks:
+      - db
+
+networks:
+  db:
+    driver: overlay
+  reverse_proxy:
+    driver: overlay
